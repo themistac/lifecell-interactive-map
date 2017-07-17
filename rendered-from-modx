@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html> 
+<head> 
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" /> 
+<title>LifeCell</title>
+<base href="http://sandpit.talkdesignandprint.com/" />
+<script src="http://maps.google.com/maps/api/js?sensor=false"></script>
+<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.10.1.min.js"></script>
+  
+<style>
+html, body { height: 100%; margin:0; padding:0; font-family: Arial, sans-serif; background-color:#444;}
+
+.cf:before,
+.cf:after { content:" "; display:table; }
+.cf:after { clear:both; }
+
+.left { position:absolute; top:0; left:0; width:250px; height:100%; box-sizing:border-box; box-shadow:0 0 10px #444; z-index:99; background-color:rgba(0,0,0,.75); overflow:auto; }
+
+.logo { padding:20px; background-color:rgba(0, 0, 0, 0.25); }
+
+.left p,
+.left p a { color:#fff; }
+
+.map {width: 100%; height: 100%; }
+
+.chart { margin:25px auto 0 auto; width:170px; }
+.bar-chart { display:inline-block; position:relative; height:100px; width:75px; border-bottom:1px solid #ccc; }
+.bar-chart.gap { margin-left:20px }
+
+.projected { background-color:pink; left:0; }
+.actual { background-color:red; left:35px; }
+
+.bar { display:inline-block; margin-left:5px; position:absolute; bottom:0;  width:30px; border-radius: 2px 2px 0 0; box-shadow:0 0 5px #bbb}
+
+.projected span,
+.actual span{ position:absolute; top:-20px; display:block; text-align:center; width:30px }
+
+.key { position:absolute; bottom:10px; left:10px; width:230px; background-color:rgba(0,0,0,.5); box-sizing:border-box; padding:10px; border-radius:5px; }
+.key .col { float:left; width:50%; }
+.key p { font-size:12px; }
+.key h3 { margin:0 0 10px 0; color:#fff; font-size:18px; }
+
+.nav h3 { margin:20px 20px 10px 20px; color:rgba(255,255,255,.5); font-size:16px; cursor:default;}
+.nav ul { width:100%; margin:0; padding:0; }
+.nav ul li { list-style: none; display:block; font-size:13px; width:100%; }
+.nav ul li a, 
+.nav ul li a:link, 
+.nav ul li a:visited { display: block; text-decoration: none; color: #fff; padding:8px 20px !important; border-bottom: 1px solid rgba(0,0,0,.25) }
+.nav ul li a:hover, #nav ul li.active a { color:#fff !important; cursor: pointer;  background-color: rgba(0,0,0,.25); text-shadow: 0 1px 0 #000;}
+.nav ul li a:active { color:#fff !important; cursor: pointer; }
+.nav ul li.last { border:none; }
+
+</style>
+  
+</head>
+<body>
+
+<div id="map" class="map"></div>
+
+<div class="left">
+
+<div class="logo">
+<img src="/images/lifecell/logo-light.png" alt="LifeCell">
+</div>
+
+<div id="location-menu" class="nav">
+<h3>Regions</h3>
+<ul>
+<li><a href="clients/lifecell/greyscale-map/">Greyscale map</a></li>
+<li><a onclick="clickroute(53.959964, -1.428223, 8)" href="javascript:;">England (North)</a></li>
+<li><a onclick="clickroute(51.512845, -0.021973, 10)" href="javascript:;">London</a></li>
+<li><a onclick="clickroute(50.821900, -2.318115, 9)" href="javascript:;">England (South Cental)</a></li>
+<li><a onclick="clickroute(, , 8)" href="javascript:;">Thames Valley</a></li>
+</ul>
+<h3>Hospitals</h3>
+<ul style="margin-bottom:230px;">
+<li><a id="location0" href="javascript:;">Alton Community Centre</a></li>
+<li><a id="location1" href="javascript:;">Andover Doctor</a></li>
+<li><a id="location2" href="javascript:;">Basingstoke Doctor</a></li>
+<li><a id="location3" href="javascript:;">Cairns Library, John Radcliffe Hospital, Oxford OX3 9DU</a></li>
+<li><a id="location4" href="javascript:;">Gosport Doctor</a></li>
+<li><a id="location5" href="javascript:;">Heatherwood Hospital, Ascot SL5 8AA</a></li>
+<li><a id="location6" href="javascript:;">Hospital #02</a></li>
+<li><a id="location7" href="javascript:;">Hospital #04</a></li>
+</ul>
+</div>
+
+<div class="key cf">
+<div class="col">
+<p><img src="/images/lifecell/hospital-icon.png"> Hospital</p>
+<p><span style="height:20px; width:20px; background-color:pink; display:inline-block; "></span> Projected</p>
+</div>
+<div class="col">
+<p><img src="/images/lifecell/doctor-icon.png"> Doctor</p>
+<p><span style="height:20px; width:20px; background-color:red; display:inline-block; "></span> Actual</p>
+</div>
+</div>
+
+</div>
+
+
+<script type="text/javascript">
+    // Define your locations: HTML content for the info window, latitude, longitude
+    var locations = [
+['<h4>Alton Community Centre</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:100%;" title="Projected"><span>100</span></div><div class="actual bar" style="height:10%;" title="Actual"><span>10</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:90%;" title="Projected"><span>90</span></div><div class="actual bar" style="height:20%;" title="Actual"><span>20</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.150719, -0.973177, 'Alton Community Centre'],
+['<h4>Andover Doctor</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:100%;" title="Projected"><span>100</span></div><div class="actual bar" style="height:10%;" title="Actual"><span>10</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:90%;" title="Projected"><span>90</span></div><div class="actual bar" style="height:20%;" title="Actual"><span>20</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.245240, -1.491394, 'Andover Doctor'],
+['<h4>Basingstoke Doctor</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:100%;" title="Projected"><span>100</span></div><div class="actual bar" style="height:10%;" title="Actual"><span>10</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:90%;" title="Projected"><span>90</span></div><div class="actual bar" style="height:20%;" title="Actual"><span>20</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.266540, -1.092396, 'Basingstoke Doctor'],
+['<h4>Cairns Library, John Radcliffe Hospital, Oxford OX3 9DU</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:79%;" title="Projected"><span>79</span></div><div class="actual bar" style="height:45%;" title="Actual"><span>45</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:80%;" title="Projected"><span>80</span></div><div class="actual bar" style="height:64%;" title="Actual"><span>64</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.763871, -1.219806, 'Cairns Library, John Radcliffe Hospital, Oxford OX3 9DU'],
+['<h4>Gosport Doctor</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:100%;" title="Projected"><span>100</span></div><div class="actual bar" style="height:10%;" title="Actual"><span>10</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:90%;" title="Projected"><span>90</span></div><div class="actual bar" style="height:20%;" title="Actual"><span>20</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 50.998460, -1.410370, 'Gosport Doctor'],
+['<h4>Heatherwood Hospital, Ascot SL5 8AA</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:79%;" title="Projected"><span>79</span></div><div class="actual bar" style="height:45%;" title="Actual"><span>45</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:80%;" title="Projected"><span>80</span></div><div class="actual bar" style="height:64%;" title="Actual"><span>64</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.410166, -0.687338, 'Heatherwood Hospital, Ascot SL5 8AA'],
+['<h4>Hospital #02</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:100%;" title="Projected"><span>100</span></div><div class="actual bar" style="height:10%;" title="Actual"><span>10</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:90%;" title="Projected"><span>90</span></div><div class="actual bar" style="height:20%;" title="Actual"><span>20</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.567339, 0.145569, 'Hospital #02'],
+['<h4>Hospital #04</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:79%;" title="Projected"><span>79</span></div><div class="actual bar" style="height:45%;" title="Actual"><span>45</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:80%;" title="Projected"><span>80</span></div><div class="actual bar" style="height:64%;" title="Actual"><span>64</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 52.449565, -1.951447, 'Hospital #04'],
+['<h4>Hospital #06</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:95%;" title="Projected"><span>95</span></div><div class="actual bar" style="height:10%;" title="Actual"><span>10</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:90%;" title="Projected"><span>90</span></div><div class="actual bar" style="height:20%;" title="Actual"><span>20</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 53.109195, -0.351563, 'Hospital #06'],
+['<h4>Hospital #07</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:100%;" title="Projected"><span>100</span></div><div class="actual bar" style="height:10%;" title="Actual"><span>10</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:90%;" title="Projected"><span>90</span></div><div class="actual bar" style="height:20%;" title="Actual"><span>20</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 53.280324, -0.834961, 'Hospital #07'],
+['<h4>Hospital #08</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:50%;" title="Projected"><span>50</span></div><div class="actual bar" style="height:5%;" title="Actual"><span>5</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:60%;" title="Projected"><span>60</span></div><div class="actual bar" style="height:12%;" title="Actual"><span>12</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.492158, -0.230713, 'Hospital #08'],
+['<h4>Hospital #09</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:100%;" title="Projected"><span>100</span></div><div class="actual bar" style="height:10%;" title="Actual"><span>10</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:90%;" title="Projected"><span>90</span></div><div class="actual bar" style="height:20%;" title="Actual"><span>20</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.564394, -0.037079, 'Hospital #09'],
+['<h4>Hospital #10</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:48%;" title="Projected"><span>48</span></div><div class="actual bar" style="height:60%;" title="Actual"><span>60</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:70%;" title="Projected"><span>70</span></div><div class="actual bar" style="height:54%;" title="Actual"><span>54</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 52.469565, -1.851447, 'Hospital #10'],
+['<h4>Hospital #11</h4><p>Morbi libero elit, feugiat in accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:25%;" title="Projected"><span>25</span></div><div class="actual bar" style="height:50%;" title="Actual"><span>50</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:88%;" title="Projected"><span>88</span></div><div class="actual bar" style="height:60%;" title="Actual"><span>60</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 52.606884, -1.985779, 'Hospital #11'],
+['<h4>Hospital #12</h4><p>Morbi libero elit, feugiat in accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:25%;" title="Projected"><span>25</span></div><div class="actual bar" style="height:50%;" title="Actual"><span>50</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:88%;" title="Projected"><span>88</span></div><div class="actual bar" style="height:60%;" title="Actual"><span>60</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 53.236126, -0.541077, 'Hospital #12'],
+['<h4>Hospital #13</h4><p>Morbi libero elit, feugiat in accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:38%;" title="Projected"><span>38</span></div><div class="actual bar" style="height:65%;" title="Actual"><span>65</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:72%;" title="Projected"><span>72</span></div><div class="actual bar" style="height:24%;" title="Actual"><span>24</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 54.974046, -2.017505, 'Hospital #13'],
+['<h4>Hospital #14</h4><p>Morbi libero elit, feugiat in accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:38%;" title="Projected"><span>38</span></div><div class="actual bar" style="height:65%;" title="Actual"><span>65</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:72%;" title="Projected"><span>72</span></div><div class="actual bar" style="height:24%;" title="Actual"><span>24</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 55.653071, -3.193642, 'Hospital #14'],
+['<h4>Knowledge Centre, Churchill Hospital, Old Road Campus Research Building, Oxford OX3 7DQ</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:79%;" title="Projected"><span>79</span></div><div class="actual bar" style="height:45%;" title="Actual"><span>45</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:80%;" title="Projected"><span>80</span></div><div class="actual bar" style="height:64%;" title="Actual"><span>64</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.751796, -1.214509, 'Knowledge Centre, Churchill Hospital, Old Road Campus Research Building, Oxford OX3 7DQ'],
+['<h4>Littlemore Mental Health Centre, Oxford OX4 4XN</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:79%;" title="Projected"><span>79</span></div><div class="actual bar" style="height:45%;" title="Actual"><span>45</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:80%;" title="Projected"><span>80</span></div><div class="actual bar" style="height:64%;" title="Actual"><span>64</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.717459, -1.229536, 'Littlemore Mental Health Centre, Oxford OX4 4XN'],
+['<h4>Milton Keynes Hospital, Milton Keynes MK6 5LD</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:79%;" title="Projected"><span>79</span></div><div class="actual bar" style="height:45%;" title="Actual"><span>45</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:80%;" title="Projected"><span>80</span></div><div class="actual bar" style="height:64%;" title="Actual"><span>64</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 52.026383, -0.735795, 'Milton Keynes Hospital, Milton Keynes MK6 5LD'],
+['<h4>Nuffield Orthopaedic Centre, Oxford OX3 7HE</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:79%;" title="Projected"><span>79</span></div><div class="actual bar" style="height:45%;" title="Actual"><span>45</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:80%;" title="Projected"><span>80</span></div><div class="actual bar" style="height:64%;" title="Actual"><span>64</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.753695, -1.210797, 'Nuffield Orthopaedic Centre, Oxford OX3 7HE'],
+['<h4>Petersfield Doctor</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:100%;" title="Projected"><span>100</span></div><div class="actual bar" style="height:10%;" title="Actual"><span>10</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:90%;" title="Projected"><span>90</span></div><div class="actual bar" style="height:20%;" title="Actual"><span>20</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.007591, -0.938990, 'Petersfield Doctor'],
+['<h4>Postgraduate Centre, Wexham Park Hospital, Slough SL2 4HL</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:79%;" title="Projected"><span>79</span></div><div class="actual bar" style="height:45%;" title="Actual"><span>45</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:80%;" title="Projected"><span>80</span></div><div class="actual bar" style="height:64%;" title="Actual"><span>64</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.533136, -0.575125, 'Postgraduate Centre, Wexham Park Hospital, Slough SL2 4HL'],
+['<h4>Postgraduate Education Centre, Horton Hospital Banbury OX16 9AL</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:79%;" title="Projected"><span>79</span></div><div class="actual bar" style="height:45%;" title="Actual"><span>45</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:80%;" title="Projected"><span>80</span></div><div class="actual bar" style="height:64%;" title="Actual"><span>64</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 52.053522, -1.336664, 'Postgraduate Education Centre, Horton Hospital Banbury OX16 9AL'],
+['<h4>Prospect Park Hospital, Reading RG30 4EJ</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:79%;" title="Projected"><span>79</span></div><div class="actual bar" style="height:45%;" title="Actual"><span>45</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:80%;" title="Projected"><span>80</span></div><div class="actual bar" style="height:64%;" title="Actual"><span>64</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.449117, -1.014720, 'Prospect Park Hospital, Reading RG30 4EJ'],
+['<h4>Salisbury Doctor</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:100%;" title="Projected"><span>100</span></div><div class="actual bar" style="height:10%;" title="Actual"><span>10</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:90%;" title="Projected"><span>90</span></div><div class="actual bar" style="height:20%;" title="Actual"><span>20</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.068785, -1.794472, 'Salisbury Doctor'],
+['<h4>Slade House, Horspath Driftway, Oxford OX3 7JH</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:79%;" title="Projected"><span>79</span></div><div class="actual bar" style="height:45%;" title="Actual"><span>45</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:80%;" title="Projected"><span>80</span></div><div class="actual bar" style="height:64%;" title="Actual"><span>64</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.743453, -1.198679, 'Slade House, Horspath Driftway, Oxford OX3 7JH'],
+['<h4>Stoke Mandeville Hospital, Aylesbury HP21 8AL</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:79%;" title="Projected"><span>79</span></div><div class="actual bar" style="height:45%;" title="Actual"><span>45</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:80%;" title="Projected"><span>80</span></div><div class="actual bar" style="height:64%;" title="Actual"><span>64</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.798308, -0.802757, 'Stoke Mandeville Hospital, Aylesbury HP21 8AL'],
+['<h4>The Whiteleaf Centre ,Aylesbury HP20 1EG</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:79%;" title="Projected"><span>79</span></div><div class="actual bar" style="height:45%;" title="Actual"><span>45</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:80%;" title="Projected"><span>80</span></div><div class="actual bar" style="height:64%;" title="Actual"><span>64</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.820757, -0.802540, 'The Whiteleaf Centre ,Aylesbury HP20 1EG'],
+['<h4>Trust Education Centre, Royal Berkshire Hospital, Reading RG1 5AN</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:79%;" title="Projected"><span>79</span></div><div class="actual bar" style="height:45%;" title="Actual"><span>45</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:80%;" title="Projected"><span>80</span></div><div class="actual bar" style="height:64%;" title="Actual"><span>64</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.451402, -0.958645, 'Trust Education Centre, Royal Berkshire Hospital, Reading RG1 5AN'],
+['<h4>Warneford Hospital, Oxford OX3 7JX</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:79%;" title="Projected"><span>79</span></div><div class="actual bar" style="height:45%;" title="Actual"><span>45</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:80%;" title="Projected"><span>80</span></div><div class="actual bar" style="height:64%;" title="Actual"><span>64</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.750841, -1.222320, 'Warneford Hospital, Oxford OX3 7JX'],
+['<h4>Winchester Hospital</h4><p>Morbi libero elit, feugiat in efficitur quis, laoreet nec sem. Etiam pulvinar blandit ipsum vel facilisis. Morbi auctor pellentesque dui ac accumsan.</p><div class="chart"><div class="bar-chart"><div class="projected bar" style="height:78%;" title="Projected"><span>78</span></div><div class="actual bar" style="height:24%;" title="Actual"><span>24</span></div></div><div class="bar-chart gap"><div class="projected bar" style="height:86%;" title="Projected"><span>86</span></div><div class="actual bar" style="height:56%;" title="Actual"><span>56</span></div></div><span style="text-align:center;color:#ccc;margin:0;padding:0;float:left;width:75px">Breast</span><span style="text-align:center;color:#ccc;margin:0;padding:0;float:right;width:75px">Abdominal</span></div>', 51.060752, -1.306346, 'Winchester Hospital']
+    ];
+    
+    // Setup the different icons and shadows
+    var iconURLPrefix = '/images/lifecell/';
+    
+    var icons = [
+      iconURLPrefix + 'doctor-icon.png',
+      iconURLPrefix + 'doctor-icon.png',
+      iconURLPrefix + 'doctor-icon.png',
+      iconURLPrefix + 'hospital-icon.png',
+      iconURLPrefix + 'doctor-icon.png',
+      iconURLPrefix + 'hospital-icon.png',
+      iconURLPrefix + 'pink-dot.png',
+      iconURLPrefix + 'yellow-dot.png',
+      iconURLPrefix + 'green-dot.png',
+      iconURLPrefix + 'green-dot.png',
+      iconURLPrefix + 'pink-dot.png',
+      iconURLPrefix + 'pink-dot.png',
+      iconURLPrefix + 'yellow-dot.png',
+      iconURLPrefix + 'yellow-dot.png',
+      iconURLPrefix + 'green-dot.png',
+      iconURLPrefix + 'blue-dot.png',
+      iconURLPrefix + 'blue-dot.png',
+      iconURLPrefix + 'hospital-icon.png',
+      iconURLPrefix + 'hospital-icon.png',
+      iconURLPrefix + 'hospital-icon.png',
+      iconURLPrefix + 'hospital-icon.png',
+      iconURLPrefix + 'doctor-icon.png',
+      iconURLPrefix + 'hospital-icon.png',
+      iconURLPrefix + 'hospital-icon.png',
+      iconURLPrefix + 'hospital-icon.png',
+      iconURLPrefix + 'doctor-icon.png',
+      iconURLPrefix + 'hospital-icon.png',
+      iconURLPrefix + 'hospital-icon.png',
+      iconURLPrefix + 'hospital-icon.png',
+      iconURLPrefix + 'hospital-icon.png',
+      iconURLPrefix + 'hospital-icon.png',
+      iconURLPrefix + 'hospital-icon.png'
+    ]
+    var icons_length = icons.length;
+    
+    
+    var shadow = {
+      anchor: new google.maps.Point(15,33),
+      url: iconURLPrefix + 'msmarker.shadow.png'
+    };
+
+    var map = new google.maps.Map(document.getElementById('map'), {
+      zoom: 8,
+      center: new google.maps.LatLng(-37.92, 151.25),
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      mapTypeControl: false,
+      streetViewControl: false,
+      panControl: false,
+      zoomControlOptions: {
+         position: google.maps.ControlPosition.RIGHT_TOP
+      }
+
+    });
+
+    var infowindow = new google.maps.InfoWindow({
+      maxWidth: 250
+    });
+
+    var marker;
+    var markers = new Array();
+    
+    var iconCounter = 0;
+    
+    // Add the markers and infowindows to the map
+    for (var i = 0; i < locations.length; i++) {  
+      marker = new google.maps.Marker({
+        position: new google.maps.LatLng(locations[i][1], locations[i][2]),
+        map: map,
+		title: locations[i][3],
+        icon : icons[iconCounter],
+        shadow: shadow
+      });
+
+      markers.push(marker);
+
+      google.maps.event.addListener(marker, 'click', (function(marker, i) {
+        return function() {
+          infowindow.setContent(locations[i][0]);
+          infowindow.open(map, marker);
+        }
+      })(marker, i));
+      
+      iconCounter++;
+      // We only have a limited number of possible icon colors, so we may have to restart the counter
+      if(iconCounter >= icons_length){
+        iconCounter = 0;
+      }
+    }
+    // panControl
+        function clickroute(lati,long,zoom) {
+          var latLng = new google.maps.LatLng(lati, long); //Makes a latlng
+          map.setZoom(zoom);
+          map.panTo(latLng); //Make map global
+        }
+    
+
+    function AutoCenter() {
+      //  Create a new viewpoint bound
+      var bounds = new google.maps.LatLngBounds();
+      //  Go through each...
+      $.each(markers, function (index, marker) {
+        bounds.extend(marker.position);
+      });
+      //  Fit these bounds to the map
+      map.fitBounds(bounds);
+    }
+    AutoCenter();
+    
+    
+    // panTo
+    $("#location-menu").on("click", "#location0", function() {
+        google.maps.event.trigger(markers[0], "click");
+        var laLatLng = new google.maps.LatLng(51.150719, -0.973177);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location1", function() {
+        google.maps.event.trigger(markers[1], "click");
+        var laLatLng = new google.maps.LatLng(51.245240, -1.491394);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location2", function() {
+        google.maps.event.trigger(markers[2], "click");
+        var laLatLng = new google.maps.LatLng(51.266540, -1.092396);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location3", function() {
+        google.maps.event.trigger(markers[3], "click");
+        var laLatLng = new google.maps.LatLng(51.763871, -1.219806);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location4", function() {
+        google.maps.event.trigger(markers[4], "click");
+        var laLatLng = new google.maps.LatLng(50.998460, -1.410370);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location5", function() {
+        google.maps.event.trigger(markers[5], "click");
+        var laLatLng = new google.maps.LatLng(51.410166, -0.687338);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location6", function() {
+        google.maps.event.trigger(markers[6], "click");
+        var laLatLng = new google.maps.LatLng(51.567339, 0.145569);
+	    map.setZoom(8);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location7", function() {
+        google.maps.event.trigger(markers[7], "click");
+        var laLatLng = new google.maps.LatLng(52.449565, -1.951447);
+	    map.setZoom(8);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location8", function() {
+        google.maps.event.trigger(markers[8], "click");
+        var laLatLng = new google.maps.LatLng(53.109195, -0.351563);
+	    map.setZoom(8);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location9", function() {
+        google.maps.event.trigger(markers[9], "click");
+        var laLatLng = new google.maps.LatLng(53.280324, -0.834961);
+	    map.setZoom(8);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location10", function() {
+        google.maps.event.trigger(markers[10], "click");
+        var laLatLng = new google.maps.LatLng(51.492158, -0.230713);
+	    map.setZoom(8);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location11", function() {
+        google.maps.event.trigger(markers[11], "click");
+        var laLatLng = new google.maps.LatLng(51.564394, -0.037079);
+	    map.setZoom(8);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location12", function() {
+        google.maps.event.trigger(markers[12], "click");
+        var laLatLng = new google.maps.LatLng(52.469565, -1.851447);
+	    map.setZoom(8);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location13", function() {
+        google.maps.event.trigger(markers[13], "click");
+        var laLatLng = new google.maps.LatLng(52.606884, -1.985779);
+	    map.setZoom(8);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location14", function() {
+        google.maps.event.trigger(markers[14], "click");
+        var laLatLng = new google.maps.LatLng(53.236126, -0.541077);
+	    map.setZoom(8);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location15", function() {
+        google.maps.event.trigger(markers[15], "click");
+        var laLatLng = new google.maps.LatLng(54.974046, -2.017505);
+	    map.setZoom(8);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location16", function() {
+        google.maps.event.trigger(markers[16], "click");
+        var laLatLng = new google.maps.LatLng(55.653071, -3.193642);
+	    map.setZoom(8);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location17", function() {
+        google.maps.event.trigger(markers[17], "click");
+        var laLatLng = new google.maps.LatLng(51.751796, -1.214509);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location18", function() {
+        google.maps.event.trigger(markers[18], "click");
+        var laLatLng = new google.maps.LatLng(51.717459, -1.229536);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location19", function() {
+        google.maps.event.trigger(markers[19], "click");
+        var laLatLng = new google.maps.LatLng(52.026383, -0.735795);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location20", function() {
+        google.maps.event.trigger(markers[20], "click");
+        var laLatLng = new google.maps.LatLng(51.753695, -1.210797);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location21", function() {
+        google.maps.event.trigger(markers[21], "click");
+        var laLatLng = new google.maps.LatLng(51.007591, -0.938990);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location22", function() {
+        google.maps.event.trigger(markers[22], "click");
+        var laLatLng = new google.maps.LatLng(51.533136, -0.575125);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location23", function() {
+        google.maps.event.trigger(markers[23], "click");
+        var laLatLng = new google.maps.LatLng(52.053522, -1.336664);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location24", function() {
+        google.maps.event.trigger(markers[24], "click");
+        var laLatLng = new google.maps.LatLng(51.449117, -1.014720);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location25", function() {
+        google.maps.event.trigger(markers[25], "click");
+        var laLatLng = new google.maps.LatLng(51.068785, -1.794472);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location26", function() {
+        google.maps.event.trigger(markers[26], "click");
+        var laLatLng = new google.maps.LatLng(51.743453, -1.198679);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location27", function() {
+        google.maps.event.trigger(markers[27], "click");
+        var laLatLng = new google.maps.LatLng(51.798308, -0.802757);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location28", function() {
+        google.maps.event.trigger(markers[28], "click");
+        var laLatLng = new google.maps.LatLng(51.820757, -0.802540);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location29", function() {
+        google.maps.event.trigger(markers[29], "click");
+        var laLatLng = new google.maps.LatLng(51.451402, -0.958645);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location30", function() {
+        google.maps.event.trigger(markers[30], "click");
+        var laLatLng = new google.maps.LatLng(51.750841, -1.222320);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+    $("#location-menu").on("click", "#location31", function() {
+        google.maps.event.trigger(markers[31], "click");
+        var laLatLng = new google.maps.LatLng(51.060752, -1.306346);
+	    map.setZoom(10);
+        map.panTo(laLatLng);
+    });
+
+  </script>
+  
+</body>
+</html>
